@@ -1,0 +1,23 @@
+libs to linker:
+	Normaliz.lib
+	Ws2_32.lib
+	Wldap32.lib
+	Crypt32.lib
+	advapi32.lib
+
+code:
+	#define CURL_STATICLIB
+
+	#include "curl/curl.h"
+
+	#ifdef _DEBUG
+	#pragma comment(lib, "curl/libcurl_a_debug.lib")
+	#else
+	#pragma comment(lib, "curl/libcurl_a.lib")
+	#endif
+
+folder:
+	curl/curl.h
+	curl/curl... .h
+	curl/libcurl_a.lib
+	curl/libcurl_a_debug.lib
