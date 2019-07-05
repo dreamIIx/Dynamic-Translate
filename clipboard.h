@@ -5,65 +5,43 @@ class _ClipBoard_
 public:
 	HANDLE hData;
 	bool isopen;
-#ifndef _UNICODE
-	char* buf;
-	char* buftemp;
-#else
-	wchar_t* buf;
-	wchar_t* buftemp;
-#endif
+	_CHAR_* pbuf;
+	_STR_ buf;
+	//_STR_ buftemp;
 
 	_ClipBoard_()
 	{
 		isopen = false;
-#ifndef _UNICODE
-		buf = (char*)"";
-		buftemp = (char*)"";
-#else
-		buf = (wchar_t*)"";
-		buftemp = (wchar_t*)"";
-#endif
+		pbuf = nullptr;
+		buf = _TEXT_("");
+		//buftemp = _TEXT_("");
 	}
 
-#ifndef _UNICODE
-	void getClipboardData__(::std::string& buf_)
-#else
-	void getClipboardData__(::std::wstring& buf_)
-#endif
+	void getClipboardData__(_STR_& buf_)
 	{
+		isopen = false;
+		pbuf = nullptr;
+
 		isopen = OpenClipboard(NULL);
 
 		if (isopen)
 		{
-			hData = GetClipboardData(CF_TEXT);
+			hData = GetClipboardData(_CB_FORMAT_);
 			if (hData)
 			{
-#ifndef _UNICODE
-				buf = reinterpret_cast<char*>(GlobalLock(hData));
-#else
-				buf = reinterpret_cast<wchar_t*>(GlobalLock(hData));
-#endif
+				pbuf = reinterpret_cast<_CHAR_*>(GlobalLock(hData));
 
-#ifndef _UNICODE
-				if ((::std::strcmp(buftemp, buf) != 0) && (buf != "") && (buf != NULL) && (buf != nullptr))
-#else
-				if ((buftemp != buf) && (buf != L"") && (buf != NULL) && (buf != nullptr)) // ???
-#endif
+				if (pbuf != nullptr)
 				{
-					buftemp = buf;
+					buf = pbuf;
+					//buftemp = buf;
 					buf_ = buf;
-					system("cls");
-#ifndef _UNICODE
-					::std::cout << buf << ::std::endl;
-#else
-					::std::wcout << buf << ::std::endl;
-#endif
 				}
+				
 				GlobalUnlock(hData);
 			}
-
-			this->~_ClipBoard_();
-			Sleep(1000);
+			CloseClipboard();
+			isopen = false;
 		}
 	}
 
