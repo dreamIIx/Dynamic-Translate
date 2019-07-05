@@ -6,15 +6,11 @@ public:
 	HANDLE hData;
 	bool isopen;
 	_CHAR_* pbuf;
-	_STR_ buf;
-	//_STR_ buftemp;
 
 	_ClipBoard_()
 	{
 		isopen = false;
 		pbuf = nullptr;
-		buf = _TEXT_("");
-		//buftemp = _TEXT_("");
 	}
 
 	void getClipboardData__(_STR_& buf_)
@@ -33,9 +29,9 @@ public:
 
 				if (pbuf != nullptr)
 				{
-					buf = pbuf;
+					buf_ = pbuf;
 					//buftemp = buf;
-					buf_ = buf;
+					//buf_ = buf;
 				}
 				
 				GlobalUnlock(hData);

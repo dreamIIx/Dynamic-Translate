@@ -353,12 +353,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 	static int winx_ = WIN_X_;
 	static int winy_ = WIN_Y_;
-	//static int xClientMax;
-	static int VScrollPos;
 
-	//static int xChar;
+	static int VScrollPos;
 	static int yChar;
-	//static int xUpper;
 
 	switch (message)
 	{
@@ -367,13 +364,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		hdc = GetDC(hWnd);
 
 		GetTextMetrics(hdc, &tm);
-		//xChar = tm.tmAveCharWidth;
-		//xUpper = (tm.tmPitchAndFamily & 1 ? 3 : 2) * xChar / 2;
 		yChar = tm.tmHeight + tm.tmExternalLeading;
 
 		ReleaseDC(hWnd, hdc);
-
-		//xClientMax = 48 * xChar + 12 * xUpper;
 		return 0;
 	}
 	case WM_VSCROLL:
@@ -433,6 +426,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		ps.rcPaint.right = winx_;
 		ps.rcPaint.bottom = winy_;
 
+		//ExtTextOut(hdc, 0, -si.nPos * yChar, ETO_CLIPPED, &ps.rcPaint, response.c_str(), _tcslen(response.c_str()), NULL);
 		DrawText(hdc, response.c_str(), _tcslen(response.c_str()), &ps.rcPaint, DT_WORDBREAK);
 
 		EndPaint(hWnd, &ps);
