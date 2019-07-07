@@ -1,5 +1,14 @@
 #pragma once
 
+/*
+	Autor - -dreamIIx
+GitHub - https://github.com/dreamIIx
+Release [v0.1] on GitHub 03.07.2019
+Actual version 3.0
+This project is an "Dynamic Translate" programm, than supports to translate *any* text *fast*.
+															  !!!This project uses a Yandex.Translate API!!!
+*/
+
 #ifdef _UNICODE
 #ifndef _CHAR_
 #define _CHAR_ wchar_t

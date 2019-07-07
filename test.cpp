@@ -1,4 +1,14 @@
-﻿#include <iostream>
+﻿/*
+	Autor - -dreamIIx
+GitHub - https://github.com/dreamIIx
+Release [v0.1] on GitHub 03.07.2019
+Actual version 3.0
+This project is an "Dynamic Translate" programm, than supports to translate *any* text *fast*.
+                                                              !!!This project uses a Yandex.Translate API!!!
+*/
+
+#include <iostream>
+#include <codecvt>
 #include <string>
 
 #include <Windows.h>
@@ -6,6 +16,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <tchar.h>
+#include <wchar.h>
 
 #include "json.hpp"
 
@@ -52,6 +63,10 @@ _ClipBoard_ cb;
 ::std::string response = "your text to translate";
 static int nxPos = 0, nxMin = 0, nxMax = 255;
 
+#ifdef _UNICODE
+std::string w2char(const std::wstring&);
+std::wstring char2w(const std::string&);
+#endif
 bool send_req(::std::string&);
 ::std::string create_request(_STR_, ::std::string);
 static int writer(char*, size_t, size_t, ::std::string*);
@@ -188,6 +203,26 @@ int CALLBACK WinMain(
 	}
 }
 
+#ifdef _UNICODE
+std::string w2char(const std::wstring &wstr)
+{
+	if (wstr.empty()) return std::string();
+	int size_needed = WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), NULL, 0, NULL, NULL);
+	std::string strTo(size_needed, 0);
+	WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), &strTo[0], size_needed, NULL, NULL);
+	return strTo;
+}
+
+std::wstring char2w(const std::string &str)
+{
+	if (str.empty()) return std::wstring();
+	int size_needed = MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), NULL, 0);
+	std::wstring wstrTo(size_needed, 0);
+	MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), &wstrTo[0], size_needed);
+	return wstrTo;
+}
+#endif
+
 bool send_req(::std::string& req)
 {
 	CURLcode res;
@@ -256,7 +291,13 @@ bool send_req(::std::string& req)
 		}
 	}
 
+#ifdef _UNICODE
+	auto temp = w2char(text);
+	res += temp;
+#else
 	res += text;
+#endif
+
 	res += "&lang=";
 	res += target;
 	res += "&format=plain&options=1";
@@ -279,6 +320,7 @@ static int writer(char* data, size_t size, size_t nmemb, ::std::string* writerDa
 	::std::string res = temp;
 	res.erase(res.begin(), res.begin() + 2);
 	res.erase(res.end() - 2, res.end());
+#ifndef _UNICODE
 	int i = 0, align = 0;
 	while(true)
 	{
@@ -311,6 +353,7 @@ static int writer(char* data, size_t size, size_t nmemb, ::std::string* writerDa
 		++i;
 	}
 	res.erase(res.begin() + i, res.end());
+#endif
 	return res;
 }
 
@@ -320,17 +363,18 @@ bool mA()
 	//_setmode(_fileno(stdin), _O_U16TEXT);
 	//_setmode(_fileno(stderr), _O_U16TEXT);
 
-	_STR_ req = _TEXT_("");
+	_STR_ clipString = _TEXT_("");
+	::std::string req = "";
 	response = "";
 
-	cb.getClipboardData__(req);
-	if (req == _TEXT_(""))
+	cb.getClipboardData__(clipString);
+	if (clipString == _TEXT_(""))
 	{
 		ERROR_
 			return false;
 	}
 
-	req = create_request(req, _TEXT_("ru"));
+	req = create_request(clipString, "ru");
 
 	if (!send_req(req))
 	{
@@ -348,6 +392,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	PAINTSTRUCT ps;
 	HDC hdc;
+	HFONT mainFont;
 	SCROLLINFO si = { 0 };
 	TEXTMETRIC tm;
 
@@ -421,13 +466,28 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		hdc = BeginPaint(hWnd, &ps);
 
+#ifdef _UNICODE
+		mainFont = CreateFont(16, 0, FW_DONTCARE, FW_DONTCARE, FW_DONTCARE,
+			FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS,
+			CLIP_DEFAULT_PRECIS, DEFAULT_QUALITY, FF_DONTCARE, _TEXT_("Arial"));
+
+		auto oldFont = SelectObject(hdc, mainFont);
+#endif
+
 		ps.rcPaint.left = 0;
 		ps.rcPaint.top = 0;
 		ps.rcPaint.right = winx_;
 		ps.rcPaint.bottom = winy_;
 
-		//ExtTextOut(hdc, 0, -si.nPos * yChar, ETO_CLIPPED, &ps.rcPaint, response.c_str(), _tcslen(response.c_str()), NULL);
+#ifdef _UNICODE
+		auto resString = char2w(response);
+		DrawText(hdc, resString.c_str(), _tcslen(resString.c_str()), &ps.rcPaint, DT_WORDBREAK);
+
+		SelectObject(hdc, oldFont);
+		DeleteObject(mainFont);
+#else
 		DrawText(hdc, response.c_str(), _tcslen(response.c_str()), &ps.rcPaint, DT_WORDBREAK);
+#endif
 
 		EndPaint(hWnd, &ps);
 		return 0;

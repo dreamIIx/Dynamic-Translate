@@ -1,5 +1,15 @@
 #pragma once
 
+/*
+	Autor - -dreamIIx
+GitHub - https://github.com/dreamIIx
+Release [v0.1] on GitHub 03.07.2019
+Actual version 3.0
+This project is an "Dynamic Translate" programm, than supports to translate *any* text *fast*.
+															  !!!This project uses a Yandex.Translate API!!!
+*/
+
+
 class _ClipBoard_
 {
 public:
@@ -25,13 +35,11 @@ public:
 			hData = GetClipboardData(_CB_FORMAT_);
 			if (hData)
 			{
-				pbuf = reinterpret_cast<_CHAR_*>(GlobalLock(hData));
+				pbuf = (_CHAR_*)GlobalLock(hData);
 
 				if (pbuf != nullptr)
 				{
 					buf_ = pbuf;
-					//buftemp = buf;
-					//buf_ = buf;
 				}
 				
 				GlobalUnlock(hData);
