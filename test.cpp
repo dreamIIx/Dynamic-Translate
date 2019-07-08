@@ -320,6 +320,16 @@ static int writer(char* data, size_t size, size_t nmemb, ::std::string* writerDa
 	::std::string res = temp;
 	res.erase(res.begin(), res.begin() + 2);
 	res.erase(res.end() - 2, res.end());
+	int i = 0;
+	while (i < res.size() - 1)
+	{
+		if (static_cast<int>(res[i]) == 92 && static_cast<int>(res[i + 1]) == 110)
+		{
+			res.erase(res.begin() + i, res.begin() + i + 2);
+			res.insert(res.begin() + i, '\r\n');
+		}
+		++i;
+	}
 #ifndef _UNICODE
 	int i = 0, align = 0;
 	while(true)
@@ -457,7 +467,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		if (si.nPos != VScrollPos)
 		{
 			ScrollWindowEx(hWnd, 0, yChar * (VScrollPos - si.nPos), NULL, NULL, NULL, NULL, NULL);
-			UpdateWindow(hWnd);
+			//UpdateWindow(hWnd);
+			//InvalidateRect(hWnd, NULL, TRUE);
 		}
 
 		return 0;
@@ -490,6 +501,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 #endif
 
 		EndPaint(hWnd, &ps);
+		//ScrollWindowEx(hWnd, 0, -yChar * (VScrollPos - si.nPos), NULL, NULL, NULL, NULL, NULL);
+
 		return 0;
 	}
 	case WM_KEYDOWN:
@@ -500,7 +513,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			if (mA())
 			{
 				UpdateWindow(hWnd);
-				InvalidateRect(hWnd, 0, true);
+				InvalidateRect(hWnd, NULL, TRUE);
 			}
 			break;
 		}
