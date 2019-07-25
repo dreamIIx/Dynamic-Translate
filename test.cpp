@@ -57,6 +57,7 @@ using json = nlohmann::json;
 
 const TCHAR* szWindowClass = _T("Dynamic Translate v2.1");
 const TCHAR* szTitle = _T("dynamic_translator(translation is done using Yandex.Translate API");
+HWND button;
 HINSTANCE hInst;
 CURL* hcurl = nullptr;
 _ClipBoard_ cb;
@@ -138,17 +139,17 @@ int CALLBACK WinMain(
 			NULL
 		);
 
-		/*HWND button = CreateWindow(
+		button = CreateWindow(
 			_T("BUTTON"),
 			_T("OK"),
 			WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
-			10, 10,
+			WIN_X_, WIN_Y_,
 			50, 50,
 			hWnd,
-			NULL,
+			(HMENU)1,
 			(HINSTANCE)GetWindowLong(hWnd, GWL_HINSTANCE),
 			NULL
-		);*/
+		);
 
 		if (!hWnd)
 		{
@@ -159,7 +160,7 @@ int CALLBACK WinMain(
 
 			return 1;
 		}
-		/*if (!button)
+		if (!button)
 		{
 			MessageBox(NULL,
 				_T("Call to CreateWindow(button) failed!"),
@@ -167,13 +168,13 @@ int CALLBACK WinMain(
 				NULL);
 
 			return 1;
-		}*/
+		}
 
 		ShowWindow(hWnd, nCmdShow);
-		//ShowWindow(button, nCmdShow);
+		ShowWindow(button, nCmdShow);
 
 		UpdateWindow(hWnd);
-		//UpdateWindow(button);
+		UpdateWindow(button);
 		//SendMessage(hWnd, DM_SETDEFID, IDOK, 0);
 
 		//HACCEL hAccel = LoadAccelerators(hInstance, MAKEINTRESOURCE(122));
@@ -487,7 +488,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 		ps.rcPaint.left = 0;
 		ps.rcPaint.top = 0;
-		ps.rcPaint.right = winx_;
+		ps.rcPaint.right = winx_ - 85;
 		ps.rcPaint.bottom = winy_;
 
 #ifdef _UNICODE
@@ -516,14 +517,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				InvalidateRect(hWnd, NULL, TRUE);
 			}
 			break;
+		default:
+			break;
 		}
 		return 0;
 	}
 	case WM_COMMAND:
 	{
-		switch (wParam)
+		if (LOWORD(wParam))
 		{
-
+			if (mA())
+			{
+				UpdateWindow(hWnd);
+				InvalidateRect(hWnd, NULL, TRUE);
+			}
 		}
 		return 0;
 	}
@@ -531,6 +538,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 		winx_ = LOWORD(lParam);
 		winy_ = HIWORD(lParam);
+		SetWindowPos(button, HWND_TOP, winx_ - 50, winy_ - 50, 50, 50, NULL);
 
 		si.cbSize = sizeof(si);
 		si.fMask = SIF_RANGE | SIF_PAGE;
