@@ -3,13 +3,14 @@
 GitHub - https://github.com/dreamIIx
 Release [v0.1] on GitHub 03.07.2019
 Actual version 3.0
-This project is an "Dynamic Translate" programm, than supports to translate *any* text *fast*.
+This project is an "Dynamic Translate" programm, which provides to translate *any* text *fast*.
                                                               !!!This project uses a Yandex.Translate API!!!
 */
 
 #include <iostream>
 #include <codecvt>
 #include <string>
+#include <atomic>
 
 #include <Windows.h>
 #include <windef.h>
