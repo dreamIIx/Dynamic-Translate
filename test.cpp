@@ -32,22 +32,27 @@ This project is an "Dynamic Translate" programm, which provides to translate *an
 #endif
 
 #include "UNICODE util.h"
-#include "clipboard.h"
 
 using json = nlohmann::json;
 
 #ifdef _DEBUG
-#ifndef def_ERR_FL_
-#define def_ERR_FL_
-#define def_XTT_S(x) #x
-#define def_XTT_S_(x) def_XTT_S(x)
-#define def_XTT_S__LINE__ def_XTT_S_(__LINE__)
-#define def__FILELINE (__FILE__  " line " def_XTT_S__LINE__)
-#define ERROR_ ::std::cout << "Error - " << def__FILELINE << ::std::endl;
+#define defDX_S(x)		#x
+#define defDX_S_(x)		defDX_S(x)
+#define defDX_S__LINE__	defDX_S_(__LINE__)
+#ifndef ERROR_
+#define ERROR_				throw ::std::exception((const char*)defDX_S_(__LINE__));
+#endif
+#ifndef ER_IF
+#define ER_IF(x, y) if ( (x) ) { ERROR_ y }
+#endif
+#ifndef ER_IFN
+#define ER_IFN(x, y) if ( !(x) ) { ERROR_ y }
 #endif
 #else
-#define ERROR_ ::std::cout << "error" << ::std::endl;
+#define ERROR_ void;
 #endif
+
+#include "clipboard.h"
 
 #define _TARGET_ADDRESS_ "https://translate.yandex.net/api/v1.5/tr.json/translate"
 #define _SECURE_ACCESS_
@@ -397,6 +402,14 @@ bool mA()
 	json sparsed = json::parse(response);
 	response = reparse(sparsed["text"].dump());
 
+#ifdef _UNICODE
+	auto tempStr = char2w(response);
+	size_t sztempStr = _tcslen(tempStr.c_str());
+	cb.setClipBoardData__(tempStr.c_str(), sztempStr);
+#else
+	cb.setClipBoardData__(response.c_str(), _tcslen(response.c_str());
+#endif
+
 	return true;
 }
 
@@ -476,8 +489,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			rcTemp.bottom = winy_;
 			offsetText += yChar * (VScrollPos - si.nPos);
 			ScrollWindowEx(hWnd, 0, yChar * (VScrollPos - si.nPos), &rcTemp, NULL, NULL, NULL, SW_SCROLLCHILDREN | SW_INVALIDATE | SW_ERASE);
-			//UpdateWindow(hWnd);
-			//InvalidateRect(hWnd, NULL, TRUE);
 		}
 
 		return 0;
@@ -495,7 +506,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 		ps.rcPaint.left = 0;
 		ps.rcPaint.top = offsetText;
-		// (VScrollPos * offsetText) < 0 ? (VScrollPos * offsetText) : -(VScrollPos * offsetText)
 		ps.rcPaint.right = winx_ - 85;
 		ps.rcPaint.bottom = winy_;
 

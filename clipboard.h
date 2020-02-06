@@ -23,6 +23,31 @@ public:
 		pbuf = nullptr;
 	}
 
+	void setClipBoardData__(const _CHAR_* data, size_t lenght)
+	{
+		isopen = false;
+		pbuf = nullptr;
+
+		isopen = OpenClipboard(NULL);
+		EmptyClipboard();
+
+		if (isopen)
+		{
+			HGLOBAL hMem;
+			hMem = GlobalAlloc(GMEM_MOVEABLE, (lenght + 1) * (sizeof(_CHAR_)));
+			memcpy(GlobalLock(hMem), data, (lenght + 1) * (sizeof(_CHAR_)));
+			GlobalUnlock(hMem);
+			hData = SetClipboardData(_CB_FORMAT_, hMem);
+
+#ifdef _DEBUG
+			ER_IFN(hData)
+#endif
+
+			CloseClipboard();
+			isopen = false;
+		}
+	}
+
 	void getClipboardData__(_STR_& buf_)
 	{
 		isopen = false;
@@ -33,6 +58,7 @@ public:
 		if (isopen)
 		{
 			hData = GetClipboardData(_CB_FORMAT_);
+
 			if (hData)
 			{
 				pbuf = (_CHAR_*)GlobalLock(hData);
