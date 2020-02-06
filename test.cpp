@@ -412,6 +412,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	static int winy_ = WIN_Y_;
 
 	static int VScrollPos;
+	static int offsetText;
 	static int yChar;
 
 	switch (message)
@@ -468,7 +469,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 		if (si.nPos != VScrollPos)
 		{
-			ScrollWindowEx(hWnd, 0, yChar * (VScrollPos - si.nPos), NULL, NULL, NULL, NULL, NULL);
+			RECT rcTemp;
+			rcTemp.left = 0;
+			rcTemp.top = 0;
+			rcTemp.right = winx_ - 85;
+			rcTemp.bottom = winy_;
+			offsetText += yChar * (VScrollPos - si.nPos);
+			ScrollWindowEx(hWnd, 0, yChar * (VScrollPos - si.nPos), &rcTemp, NULL, NULL, NULL, SW_SCROLLCHILDREN | SW_INVALIDATE | SW_ERASE);
 			//UpdateWindow(hWnd);
 			//InvalidateRect(hWnd, NULL, TRUE);
 		}
@@ -478,7 +485,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_PAINT:
 	{
 		hdc = BeginPaint(hWnd, &ps);
-
 #ifdef _UNICODE
 		mainFont = CreateFont(16, 0, FW_DONTCARE, FW_DONTCARE, FW_DONTCARE,
 			FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS,
@@ -488,7 +494,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 #endif
 
 		ps.rcPaint.left = 0;
-		ps.rcPaint.top = 0;
+		ps.rcPaint.top = offsetText;
+		// (VScrollPos * offsetText) < 0 ? (VScrollPos * offsetText) : -(VScrollPos * offsetText)
 		ps.rcPaint.right = winx_ - 85;
 		ps.rcPaint.bottom = winy_;
 
@@ -503,7 +510,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 #endif
 
 		EndPaint(hWnd, &ps);
-		//ScrollWindowEx(hWnd, 0, -yChar * (VScrollPos - si.nPos), NULL, NULL, NULL, NULL, NULL);
 
 		return 0;
 	}
