@@ -153,18 +153,6 @@ int CALLBACK WinMain(
 			NULL
 		);
 
-		button = CreateWindow(
-			_T("BUTTON"),
-			_T("OK"),
-			WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
-			WIN_X_, WIN_Y_,
-			50, 50,
-			hWnd,
-			(HMENU)BTN_OK_MAIN,
-			(HINSTANCE)GetWindowLong(hWnd, GWL_HINSTANCE),
-			NULL
-		);
-
 		if (!hWnd)
 		{
 			MessageBox(NULL,
@@ -174,6 +162,19 @@ int CALLBACK WinMain(
 
 			return 1;
 		}
+
+		button = CreateWindow(
+			_T("BUTTON"),
+			_T("あ"),
+			WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+			WIN_X_, WIN_Y_,
+			50, 50,
+			hWnd,
+			(HMENU)BTN_OK_MAIN,
+			(HINSTANCE)GetWindowLong(hWnd, GWL_HINSTANCE),
+			NULL
+		);
+
 		if (!button)
 		{
 			MessageBox(NULL,
@@ -224,7 +225,10 @@ int CALLBACK WinMain(
 	}
 	else
 	{
-		ERROR_
+		MessageBox(NULL,
+			_T("curl_global_init failed!"),
+			_T("dynamic_translator"),
+			NULL);
 			curl_global_cleanup();
 		return 1;
 	}
