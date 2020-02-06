@@ -18,6 +18,7 @@ This project is an "Dynamic Translate" programm, which provides to translate *an
 #include <string.h>
 #include <tchar.h>
 #include <wchar.h>
+#include <shellapi.h>
 
 #include "json.hpp"
 
@@ -61,10 +62,17 @@ using json = nlohmann::json;
 #define WIN_X_ 750
 #define WIN_Y_ 350
 
+#define BTN_OK_MAIN 0x1
+#define WM_SHELLICON (WM_USER + 1)
+#define IDM_FUNC1 0x1234
+#define IDM_FUNC2 0x1235
+#define IDM_FUNC3 0x1236
+
 const TCHAR* szWindowClass = _T("Dynamic Translate v2.1");
 const TCHAR* szTitle = _T("dynamic_translator(translation is done using Yandex.Translate API");
 HWND button;
 HINSTANCE hInst;
+NOTIFYICONDATA nidApp;
 CURL* hcurl = nullptr;
 _ClipBoard_ cb;
 ::std::string response = "your text to translate";
@@ -152,7 +160,7 @@ int CALLBACK WinMain(
 			WIN_X_, WIN_Y_,
 			50, 50,
 			hWnd,
-			(HMENU)1,
+			(HMENU)BTN_OK_MAIN,
 			(HINSTANCE)GetWindowLong(hWnd, GWL_HINSTANCE),
 			NULL
 		);
@@ -175,6 +183,18 @@ int CALLBACK WinMain(
 
 			return 1;
 		}
+
+		nidApp;
+		nidApp.cbSize = sizeof(NOTIFYICONDATA);
+		nidApp.hWnd = (HWND)hWnd;
+		nidApp.uID = 100;
+		nidApp.uVersion = NOTIFYICON_VERSION;
+		nidApp.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
+		nidApp.hIcon = LoadIcon(NULL, IDI_APPLICATION);
+		nidApp.uCallbackMessage = WM_SHELLICON;
+		_tcscpy_s(nidApp.szTip, _TEXT_("Tray Icon"));
+
+		Shell_NotifyIcon(NIM_ADD, &nidApp);
 
 		ShowWindow(hWnd, nCmdShow);
 		ShowWindow(button, nCmdShow);
@@ -402,14 +422,6 @@ bool mA()
 	json sparsed = json::parse(response);
 	response = reparse(sparsed["text"].dump());
 
-#ifdef _UNICODE
-	auto tempStr = char2w(response);
-	size_t sztempStr = _tcslen(tempStr.c_str());
-	cb.setClipBoardData__(tempStr.c_str(), sztempStr);
-#else
-	cb.setClipBoardData__(response.c_str(), _tcslen(response.c_str());
-#endif
-
 	return true;
 }
 
@@ -525,11 +537,19 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	}
 	case WM_KEYDOWN:
 	{
-		switch (wParam)
+		switch (LOWORD(wParam))
 		{
 		case '0':
 			if (mA())
 			{
+#ifdef _UNICODE
+				auto tempStr = char2w(response);
+				size_t sztempStr = _tcslen(tempStr.c_str());
+				cb.setClipBoardData__(tempStr.c_str(), sztempStr);
+#else
+				cb.setClipBoardData__(response.c_str(), _tcslen(response.c_str());
+#endif
+
 				UpdateWindow(hWnd);
 				InvalidateRect(hWnd, NULL, TRUE);
 			}
@@ -541,14 +561,82 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	}
 	case WM_COMMAND:
 	{
-		if (LOWORD(wParam))
+		switch (LOWORD(wParam))
 		{
+		case IDM_FUNC1:
+		{
+			ShowWindow(hWnd, SW_SHOW);
 			if (mA())
 			{
 				UpdateWindow(hWnd);
 				InvalidateRect(hWnd, NULL, TRUE);
 			}
+			break;
 		}
+		case IDM_FUNC2:
+		{
+			if (mA())
+			{
+#ifdef _UNICODE
+				auto tempStr = char2w(response);
+				size_t sztempStr = _tcslen(tempStr.c_str());
+				cb.setClipBoardData__(tempStr.c_str(), sztempStr);
+#else
+				cb.setClipBoardData__(response.c_str(), _tcslen(response.c_str());
+#endif
+
+				UpdateWindow(hWnd);
+				InvalidateRect(hWnd, NULL, TRUE);
+			}
+			break;
+		}
+		case IDM_FUNC3:
+		{
+			Shell_NotifyIcon(NIM_DELETE, &nidApp);
+			DestroyWindow(hWnd);
+			break;
+		}
+		case BTN_OK_MAIN:
+		{
+			if (mA())
+			{
+#ifdef _UNICODE
+				auto tempStr = char2w(response);
+				size_t sztempStr = _tcslen(tempStr.c_str());
+				cb.setClipBoardData__(tempStr.c_str(), sztempStr);
+#else
+				cb.setClipBoardData__(response.c_str(), _tcslen(response.c_str());
+#endif
+
+				UpdateWindow(hWnd);
+				InvalidateRect(hWnd, NULL, TRUE);
+			}
+			break;
+		}
+		}
+		return 0;
+	}
+	case WM_SHELLICON:
+	{
+		switch (LOWORD(lParam))
+		{
+		case WM_RBUTTONDOWN:
+		{
+			UINT uFlag = MF_BYPOSITION | MF_STRING;
+			POINT ClickPoint;
+			GetCursorPos(&ClickPoint);
+			HMENU hPopMenu = CreatePopupMenu();
+			InsertMenu(hPopMenu, 0xFFFFFFFF, MF_BYPOSITION | MF_STRING, IDM_FUNC1, _T("Translate"));
+			InsertMenu(hPopMenu, 0xFFFFFFFF, uFlag, IDM_FUNC2, _T("Translate & Copy"));
+			InsertMenu(hPopMenu, 0xFFFFFFFF, uFlag, IDM_FUNC3, _T("Exit"));
+			SetForegroundWindow(hWnd);
+			TrackPopupMenu(hPopMenu, TPM_LEFTALIGN | TPM_LEFTBUTTON | TPM_BOTTOMALIGN,
+				ClickPoint.x, ClickPoint.y, 0, hWnd, NULL);
+
+			break;
+		}
+		}
+
 		return 0;
 	}
 	case WM_SIZE:
@@ -568,7 +656,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	}
 	case WM_CLOSE:
 	{
-		DestroyWindow(hWnd);
+		ShowWindow(hWnd, SW_HIDE);
 		return 0;
 	}
 	case WM_DESTROY:
