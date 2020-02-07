@@ -72,6 +72,7 @@ const TCHAR* szWindowClass = _T("Dynamic Translate v2.1");
 const TCHAR* szTitle = _T("dynamic_translator(translation is done using Yandex.Translate API");
 HWND button;
 HINSTANCE hInst;
+HANDLE hMutex;
 NOTIFYICONDATA nidApp;
 CURL* hcurl = nullptr;
 _ClipBoard_ cb;
@@ -99,138 +100,158 @@ int CALLBACK WinMain(
 	//SetConsoleCP(1251);
 	//SetConsoleOutputCP(1251);
 
-	curl_global_init(CURL_GLOBAL_ALL);
-	hcurl = curl_easy_init();
+	hMutex = OpenMutex(MUTEX_ALL_ACCESS, 0, _TEXT_("DynamicTranslator-DX__"));
 
-	if (hcurl)
+	if (!hMutex)
 	{
-		WNDCLASSEX wcex;
-
-		wcex.cbSize = sizeof(WNDCLASSEX);
-		wcex.style = CS_HREDRAW | CS_VREDRAW;
-		wcex.lpfnWndProc = WndProc;
-		wcex.cbClsExtra = 0;
-		wcex.cbWndExtra = 0;
-		wcex.hInstance = hInstance;
-		wcex.hIcon = LoadIcon(hInstance, IDI_APPLICATION);
-		wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
-		wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-		wcex.lpszMenuName = NULL;
-		wcex.lpszClassName = szWindowClass;
-		wcex.hIconSm = LoadIcon(wcex.hInstance, IDI_APPLICATION);
-
-		if (!RegisterClassEx(&wcex))
+		hMutex = CreateMutex(NULL, TRUE, _TEXT_("DynamicTranslator-DX__"));
+		if (GetLastError() == ERROR_ALREADY_EXISTS)
 		{
-			MessageBox(NULL,
-				_T("Call to RegisterClassEx failed!"),
-				_T("dynamic_translator"),
-				NULL);
-
-			return 1;
+			ERROR_
+				return 1;
 		}
 
-		hInst = hInstance;
+		curl_global_init(CURL_GLOBAL_ALL);
+		hcurl = curl_easy_init();
 
-		// The parameters to CreateWindow explained:
-		// szWindowClass: the name of the application
-		// szTitle: the text that appears in the title bar
-		// WS_OVERLAPPEDWINDOW: the type of window to create
-		// CW_USEDEFAULT, CW_USEDEFAULT: initial position (x, y)
-		// 500, 100: initial size (width, length)
-		// NULL: the parent of this window
-		// NULL: this application does not have a menu bar
-		// hInstance: the first parameter from WinMain
-		// NULL: not used in this application
-		HWND hWnd = CreateWindow(
-			szWindowClass,
-			szTitle,
-			WS_OVERLAPPEDWINDOW,
-			CW_USEDEFAULT, CW_USEDEFAULT,
-			WIN_X_, WIN_Y_,
-			NULL,
-			NULL,
-			hInstance,
-			NULL
-		);
-
-		if (!hWnd)
+		if (hcurl)
 		{
-			MessageBox(NULL,
-				_T("Call to CreateWindow(hWnd) failed!"),
-				_T("dynamic_translator"),
-				NULL);
+			WNDCLASSEX wcex;
 
-			return 1;
-		}
+			wcex.cbSize = sizeof(WNDCLASSEX);
+			wcex.style = CS_HREDRAW | CS_VREDRAW;
+			wcex.lpfnWndProc = WndProc;
+			wcex.cbClsExtra = 0;
+			wcex.cbWndExtra = 0;
+			wcex.hInstance = hInstance;
+			wcex.hIcon = LoadIcon(hInstance, IDI_APPLICATION);
+			wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
+			wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
+			wcex.lpszMenuName = NULL;
+			wcex.lpszClassName = szWindowClass;
+			wcex.hIconSm = LoadIcon(wcex.hInstance, IDI_APPLICATION);
 
-		button = CreateWindow(
-			_T("BUTTON"),
-			_T("あ"),
-			WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
-			WIN_X_, WIN_Y_,
-			50, 50,
-			hWnd,
-			(HMENU)BTN_OK_MAIN,
-			(HINSTANCE)GetWindowLong(hWnd, GWL_HINSTANCE),
-			NULL
-		);
-
-		if (!button)
-		{
-			MessageBox(NULL,
-				_T("Call to CreateWindow(button) failed!"),
-				_T("dynamic_translator"),
-				NULL);
-
-			return 1;
-		}
-
-		nidApp;
-		nidApp.cbSize = sizeof(NOTIFYICONDATA);
-		nidApp.hWnd = (HWND)hWnd;
-		nidApp.uID = 100;
-		nidApp.uVersion = NOTIFYICON_VERSION;
-		nidApp.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
-		nidApp.hIcon = LoadIcon(NULL, IDI_APPLICATION);
-		nidApp.uCallbackMessage = WM_SHELLICON;
-		_tcscpy_s(nidApp.szTip, _TEXT_("Tray Icon"));
-
-		Shell_NotifyIcon(NIM_ADD, &nidApp);
-
-		ShowWindow(hWnd, nCmdShow);
-		ShowWindow(button, nCmdShow);
-
-		UpdateWindow(hWnd);
-		UpdateWindow(button);
-		//SendMessage(hWnd, DM_SETDEFID, IDOK, 0);
-
-		//HACCEL hAccel = LoadAccelerators(hInstance, MAKEINTRESOURCE(122));
-		MSG msg;
-		BOOL bRet = 0;
-		while (bRet = GetMessage(&msg, nullptr, 0, 0))
-		{
-			if (bRet == -1) break;
-			//if (!TranslateAccelerator(hWnd, hAccel, &msg))
-			//{
-			if (!IsDialogMessage(hWnd, &msg))
+			if (!RegisterClassEx(&wcex))
 			{
-				TranslateMessage(&msg);
-				DispatchMessage(&msg);
-			}
-			//}
-		}
+				MessageBox(NULL,
+					_T("Call to RegisterClassEx failed!"),
+					_T("dynamic_translator"),
+					NULL);
 
-		curl_global_cleanup();
-		return (int)msg.wParam;
+				return 1;
+			}
+
+			hInst = hInstance;
+
+			// The parameters to CreateWindow explained:
+			// szWindowClass: the name of the application
+			// szTitle: the text that appears in the title bar
+			// WS_OVERLAPPEDWINDOW: the type of window to create
+			// CW_USEDEFAULT, CW_USEDEFAULT: initial position (x, y)
+			// 500, 100: initial size (width, length)
+			// NULL: the parent of this window
+			// NULL: this application does not have a menu bar
+			// hInstance: the first parameter from WinMain
+			// NULL: not used in this application
+			HWND hWnd = CreateWindow(
+				szWindowClass,
+				szTitle,
+				WS_OVERLAPPEDWINDOW,
+				CW_USEDEFAULT, CW_USEDEFAULT,
+				WIN_X_, WIN_Y_,
+				NULL,
+				NULL,
+				hInstance,
+				NULL
+			);
+
+			if (!hWnd)
+			{
+				MessageBox(NULL,
+					_T("Call to CreateWindow(hWnd) failed!"),
+					_T("Dynamic_translator"),
+					NULL);
+
+				return 1;
+			}
+
+			button = CreateWindow(
+				_T("BUTTON"),
+				_T("あ"),
+				WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,
+				WIN_X_, WIN_Y_,
+				50, 50,
+				hWnd,
+				(HMENU)BTN_OK_MAIN,
+				(HINSTANCE)GetWindowLong(hWnd, GWL_HINSTANCE),
+				NULL
+			);
+
+			if (!button)
+			{
+				MessageBox(NULL,
+					_T("Call to CreateWindow(button) failed!"),
+					_T("Dynamic_translator"),
+					NULL);
+
+				return 1;
+			}
+
+			nidApp;
+			nidApp.cbSize = sizeof(NOTIFYICONDATA);
+			nidApp.hWnd = (HWND)hWnd;
+			nidApp.uID = 100;
+			nidApp.uVersion = NOTIFYICON_VERSION;
+			nidApp.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
+			nidApp.hIcon = LoadIcon(NULL, IDI_APPLICATION);
+			nidApp.uCallbackMessage = WM_SHELLICON;
+			_tcscpy_s(nidApp.szTip, _TEXT_("Tray Icon"));
+
+			Shell_NotifyIcon(NIM_ADD, &nidApp);
+
+			ShowWindow(hWnd, nCmdShow);
+			ShowWindow(button, nCmdShow);
+
+			UpdateWindow(hWnd);
+			UpdateWindow(button);
+			//SendMessage(hWnd, DM_SETDEFID, IDOK, 0);
+
+			//HACCEL hAccel = LoadAccelerators(hInstance, MAKEINTRESOURCE(122));
+			MSG msg;
+			BOOL bRet = 0;
+			while (bRet = GetMessage(&msg, nullptr, 0, 0))
+			{
+				if (bRet == -1) break;
+				//if (!TranslateAccelerator(hWnd, hAccel, &msg))
+				//{
+				if (!IsDialogMessage(hWnd, &msg))
+				{
+					TranslateMessage(&msg);
+					DispatchMessage(&msg);
+				}
+				//}
+			}
+
+			curl_global_cleanup();
+			return (int)msg.wParam;
+		}
+		else
+		{
+			MessageBox(NULL,
+				_T("curl_global_init failed!"),
+				_T("Dynamic_translator"),
+				NULL);
+			curl_global_cleanup();
+			return 1;
+		}
 	}
 	else
 	{
 		MessageBox(NULL,
-			_T("curl_global_init failed!"),
-			_T("dynamic_translator"),
+			_T("The program is already running!"),
+			_T("Dynamic_translator"),
 			NULL);
-			curl_global_cleanup();
-		return 1;
+			return 0;
 	}
 }
 
@@ -665,6 +686,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	}
 	case WM_DESTROY:
 	{
+		if (!ReleaseMutex(hMutex))
+		{
+			ERROR_
+		}
 		PostQuitMessage(0);
 		return 0;
 	}
